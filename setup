@@ -1,8 +1,98 @@
+chef server setup is simple. Just run the below commands
 
-wget https://packages.chef.io/stable/el/7/chef-server-core-12.10.0-1.el7.x86_64.rpm
-rpm -ivh chef-server-core-*.rpm
+default dir of check server is /opt
+
+run as root
+wget https://downloads.chef.io/chef-server/12.18.14
+rpm -ivh chef-server-core-12.18.14-1.el7.x86_64.rpm
+
 sudo chef-server-ctl reconfigure
-sudo chef-server-ctl user-create admin admin admin admin@local.com password -f /opt/admin.pem
-sudo chef-server-ctl org-create student 'Student App' --association_user admin --filename /opt/student.pem
+sudo chef-server-ctl user-create admin Admin User admin@local.com 'PASSWORD' --filename /opt/admin.pem 
+sudo chef-server-ctl org-create student 'Student App' --association_user admin --filename /opt/student.pem 
 sudo chef-server-ctl install chef-manage
 sudo chef-server-ctl reconfigure
+sudo chef-manage-ctl reconfigure --accept-license
+
+All done for chef server
+
+also make entery in etc/hosts
+sudo vi /etc/hosts
+ip address name
+e.g in my case
+35.243.173.130   server3
+
+*****************************************
+
+for chefdk .
+It contain the cookbook and knife command.
+download chefdk from chef website
+wget https://packages.chef.io/files/stable/chefdk/3.5.13/el/7/chefdk-3.5.13-1.el7.x86_64.rpm
+than rpm -ivh chefdk.......
+
+now we need chef-repo director which will contain a hidden director .chef
+there are two ways to create it.
+
+Manually
+see once you install chefdk it does not install chef-repo on its own.
+we creake a director
+mkdir chef-repo
+now this will create a director and if you do ls you will see some files like cookbooks.
+again create a dir .chef inside chef-repo
+mkdir .chef
+
+create three files admin.pem, student.pem and config.rb
+earlier config.rb was called knife.rb but now its config.rb
+
+you can see above in chef server , i have created admin.file while creating the user.
+copy the content from chef server admin.pem file to chef-repo/.chef/admin.pem
+
+similarly repeat the step for student.pem file
+i.e copy the content from chef server student.pem file to chef-repo/.chef/student.pem
+
+also create a config.rb file with below content.
+#edit as per your config
+
+current_dir = File.dirname(__FILE__)
+log_level                :info
+log_location             STDOUT
+node_name                'admin'
+client_key               "#{current_dir}/admin.pem"
+validation_client_name   'student'
+validation_key           "#{current_dir}/student.pem"
+chef_server_url          'https://35.243.173.130/organizations/student'
+cache_type               'BasicFile'
+cache_options( :path => "#{ENV['HOME']}/.chef/checksums" )
+cookbook_path            ["#{current_dir}/../cookbooks"]
+ssl_verify_mode :verify_none
+
+
+you have to change only 
+1.node_name
+2.client_key
+3.validation_client_name
+4.chef_server_url
+5.add ssl_verify_mode : verify_none in case you keep getting ssl error
+
+
+***************************
+2nd method.
+
+now if you put yopur chef server if address in brower, and login 
+here mine user id is admin and password is PASSWORD
+it will open a page where you find a option called administartion,
+click that and click the organsization name. e.g mine was student
+it will show a starter kit. Downlaod it and unzip in your chefdk.
+you will get all files like admin.pem and config.rb by default . You dont have to do much.
+
+*********************************************
+
+Now you are ready to go.
+some commands
+knife ssl fetch
+## to avoid ssl warning
+Knife node list
+or knife client list
+
+
+
+
